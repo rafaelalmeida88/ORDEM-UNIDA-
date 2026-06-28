@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Quiz Tático de Ordem Unida PMMG — CEFS 2026. Treine comandos, marchas, posições e manejo de fuzil.">
+<meta name="theme-color" content="#0a0c10">
+<title>Quiz Tático — Ordem Unida PMMG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*, ::before, ::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0c10;
+  --surface: #111520;
+  --surface2: #161b2e;
+  --border: #1e2a4a;
+  --text: #e8eaf0;
+  --muted: #7a8099;
+  --faint: #3a4060;
+  --primary: #00d4ff;
+  --primary-dim: #0099bb;
+  --primary-glow: rgba(0,212,255,0.15);
+  --gold: #ffd700;
+  --gold-dim: #cc9900;
+  --green: #00ff88;
+  --green-dim: #00cc66;
+  --red: #ff4466;
+  --red-dim: #cc2244;
+  --orange: #ff8800;
+  --purple: #9966ff;
+  --radius: 12px;
+  --radius-lg: 20px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 30px rgba(0,212,255,0.2);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Exo 2", sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(at 20% 50%, rgba(0,60,120,0.15) 0%, transparent 60%),
+    radial-gradient(at 80% 20%, rgba(60,0,120,0.10) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ── HEADER ── */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.logo {
+  font-family: Orbitron, monospace;
+  font-size: clamp(14px,3.5vw,20px);
+  font-weight: 900;
+  color: var(--primary);
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px var(--primary);
+}
+.logo span { color: var(--gold); }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.mute-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: .2s;
+  color: var(--text);
+}
+.mute-btn:hover { border-color: var(--primary); }
+.global-pts {
+  background: linear-gradient(135deg, var(--surface2), var(--surface));
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: Orbitron, monospace;
+  font-size: 14px;
+  color: var(--gold);
+}
+.global-pts .pts-val { font-size: 20px; font-weight: 900; }
+
+/* ── SCREENS ── */
+.screen { display: none; animation: fadeIn .3s ease; }
+.screen.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── MAPA ── */
+.map-title {
+  font-family: Orbitron, monospace;
+  font-size: clamp(18px,5vw,28px);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 6px;
+  color: var(--primary);
+  text-shadow: 0 0 30px var(--primary);
+}
+.map-subtitle { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+.modules-grid { display: flex; flex-direction: column; gap: 14px; }
+
+.module-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  cursor: pointer;
+  transition: .25s;
+  position: relative;
+  overflow: hidden;
+}
+.module-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--primary-glow);
+  opacity: 0;
+  transition: .3s;
+}
+.module-card:hover:not(.locked)::before { opacity: 1; }
+.module-card:hover:not(.locked) {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+.module-card.locked { opacity: .5; cursor: not-allowed; }
+.module-card.locked .module-icon { filter: grayscale(1); }
+
+.module-top { display: flex; align-items: center; gap: 14px; }
+.module-icon { font-size: 36px; line-height: 1; flex-shrink: 0; }
+.module-info { flex: 1; }
+.module-name { font-family: Orbitron, monospace; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.module-desc { font-size: 13px; color: var(--muted); line-height: 1.4; }
+.module-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+.module-stars { font-size: 18px; letter-spacing: 2px; }
+.module-lock { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gold); font-family: Orbitron, monospace; }
+.module-lock .lock-icon { font-size: 16px; }
+.module-badge { background: var(--green); color: #000; font-family: Orbitron, monospace; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+.module-best { font-size: 12px; color: var(--primary); font-family: Orbitron, monospace; }
+.progress-bar-wrap { background: var(--faint); border-radius: 4px; height: 4px; margin-top: 12px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--purple)); border-radius: 4px; transition: width .5s; }
+
+/* ── QUIZ ── */
+.quiz-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.quit-btn {
+  background: transparent;
+  border: 1px solid var(--red-dim);
+  color: var(--red);
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: "Exo 2", sans-serif;
+  transition: .2s;
+}
+.quit-btn:hover { background: var(--red); color: #fff; }
+.quiz-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.q-counter { font-family: Orbitron, monospace; font-size: 12px; color: var(--muted); }
+.q-pts-live { font-family: Orbitron, monospace; font-size: 13px; color: var(--gold); }
+.combo-badge {
+  background: var(--orange);
+  color: #000;
+  font-family: Orbitron, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: none;
+}
+.combo-badge.show { display: inline-block; animation: comboPop .3s ease; }
+@keyframes comboPop {
+  0%   { transform: scale(.5); }
+  60%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.timer-wrap { width: 100%; background: var(--faint); border-radius: 4px; height: 6px; margin-bottom: 18px; overflow: hidden; }
+.timer-fill { height: 100%; border-radius: 4px; transition: width .9s linear, background .5s; }
+.timer-fill.warn { animation: pulse-warn .5s ease infinite alternate; }
+@keyframes pulse-warn { from { opacity: 1; } to { opacity: .5; } }
+
+.q-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 18px;
+}
+.q-category { font-size: 11px; color: var(--primary); font-family: Orbitron, monospace; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+.q-text { font-size: clamp(15px,3.5vw,18px); line-height: 1.6; font-weight: 600; color: var(--text); }
+
+.options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.opt-btn {
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: "Exo 2", sans-serif;
+  color: var(--text);
+  transition: .2s;
+  line-height: 1.4;
+}
+.opt-btn:hover:not(:disabled) {
+  background: var(--primary-glow);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateX(4px);
+}
+.opt-btn:disabled { cursor: default; }
+.opt-btn.correct { background: rgba(0,255,136,.15); border-color: var(--green); transform: none; color: var(--green) !important; }
+.opt-btn.wrong   { background: rgba(255,68,102,.15);  border-color: var(--red);   transform: none; color: var(--red)   !important; }
+
+.vf-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+.vf-btn {
+  padding: 18px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  font-family: Orbitron, monospace;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text);
+  transition: .2s;
+}
+.vf-btn.v:hover:not(:disabled) { background: rgba(0,255,136,.15); border-color: var(--green); color: var(--green); }
+.vf-btn.f:hover:not(:disabled) { background: rgba(255,68,102,.15); border-color: var(--red);   color: var(--red);   }
+.vf-btn:disabled { cursor: default; opacity: .6; }
+.vf-btn.correct { background: rgba(0,255,136,.2); border-color: var(--green); color: var(--green) !important; }
+.vf-btn.wrong   { background: rgba(255,68,102,.2); border-color: var(--red);   color: var(--red)   !important; }
+
+.feedback {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 16px;
+  border-left: 4px solid var(--primary);
+  display: none;
+  animation: fadeIn .3s ease;
+}
+.feedback.show { display: block; }
+.feedback.correct-fb { border-color: var(--green); }
+.feedback.wrong-fb   { border-color: var(--red);   }
+.feedback-header { font-family: Orbitron, monospace; font-size: 14px; font-weight: 900; margin-bottom: 8px; }
+.feedback.correct-fb .feedback-header { color: var(--green); }
+.feedback.wrong-fb   .feedback-header { color: var(--red); }
+.feedback-text   { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.feedback-source { font-size: 11px; color: var(--primary); margin-top: 8px; font-style: italic; }
+.pts-earned { font-family: Orbitron, monospace; font-size: 13px; color: var(--gold); margin-top: 6px; }
+
+.next-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+  color: #000;
+  border: none;
+  border-radius: var(--radius);
+  padding: 16px;
+  font-family: Orbitron, monospace;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: .2s;
+  letter-spacing: 1px;
+  display: none;
+}
+.next-btn.show { display: block; animation: fadeIn .2s ease; }
+.next-btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+/* ── RESULTADOS ── */
+.results-wrap { text-align: center; padding: 20px 0; }
+.results-title { font-family: Orbitron, monospace; font-size: clamp(20px,5vw,32px); font-weight: 900; margin-bottom: 8px; }
+.results-rank { font-size: 50px; margin: 16px 0; animation: bounceIn .6s ease; }
+@keyframes bounceIn {
+  0%   { transform: scale(0); }
+  70%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.results-rank-name { font-family: Orbitron, monospace; font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.results-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+.stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.stat-val { font-family: Orbitron, monospace; font-size: 22px; font-weight: 900; display: block; }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.results-pts-earned {
+  font-family: Orbitron, monospace;
+  font-size: 16px;
+  color: var(--gold);
+  background: rgba(255,215,0,.1);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin: 16px 0;
+}
+.unlock-notif {
+  background: linear-gradient(135deg, rgba(153,102,255,.2), rgba(0,212,255,.1));
+  border: 1px solid var(--purple);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin: 16px 0;
+  animation: glow-pulse 2s ease infinite alternate;
+}
+@keyframes glow-pulse {
+  from { box-shadow: 0 0 10px rgba(153,102,255,.3); }
+  to   { box-shadow: 0 0 30px rgba(153,102,255,.6); }
+}
+.unlock-notif-title { font-family: Orbitron, monospace; font-size: 14px; color: var(--purple); font-weight: 900; margin-bottom: 6px; }
+.unlock-notif-body  { font-size: 14px; color: var(--muted); }
+
+.results-btns { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.res-btn { flex: 1; min-width: 140px; padding: 14px; border-radius: var(--radius); border: none; font-family: Orbitron, monospace; font-size: 13px; font-weight: 700; cursor: pointer; transition: .2s; }
+.res-btn.primary   { background: var(--primary); color: #000; }
+.res-btn.secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+.res-btn:hover { filter: brightness(1.15); transform: translateY(-2px); }
+
+/* ── CONFIRM OVERLAY ── */
+.confirm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.8);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.confirm-overlay.show { display: flex; }
+.confirm-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+}
+.confirm-title { font-family: Orbitron, monospace; font-size: 18px; font-weight: 900; color: var(--red); margin-bottom: 10px; }
+.confirm-text  { color: var(--muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+.confirm-btns  { display: flex; gap: 10px; }
+.confirm-btn { flex: 1; padding: 12px; border-radius: var(--radius); border: none; font-family: Orbitron, monospace; font-size: 13px; font-weight: 700; cursor: pointer; transition: .2s; }
+.confirm-btn.danger { background: var(--red); color: #fff; }
+.confirm-btn.safe   { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+.confirm-btn:hover  { filter: brightness(1.15); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 12px 24px;
+  font-family: Orbitron, monospace;
+  font-size: 13px;
+  color: var(--primary);
+  z-index: 200;
+  transition: transform .4s;
+  white-space: nowrap;
+  text-shadow: 0 0 10px var(--primary);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── CONFETTI ── */
+.confetti-piece {
+  position: fixed;
+  width: 8px; height: 8px;
+  pointer-events: none;
+  z-index: 300;
+  animation: confettiFall 2s ease-in forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="logo">⚔️ QUIZ<span>TÁTICO</span></div>
+    <div class="header-right">
+      <div class="global-pts" id="globalPtsDisplay">
+        🏅 <span class="pts-val" id="globalPtsVal">0</span> pts
+      </div>
+      <button class="mute-btn" id="muteBtn" title="Som">🔊</button>
+    </div>
+  </header>
+
+  <!-- TELA: MAPA DE MISSÕES -->
+  <div id="screenMap" class="screen active">
+    <h1 class="map-title">⚔️ MAPA DE MISSÕES</h1>
+    <p class="map-subtitle">Ordem Unida PMMG — CEFS 2026 | Acumule pontos para desbloquear módulos</p>
+    <div class="modules-grid" id="modulesGrid"></div>
+  </div>
+
+  <!-- TELA: QUIZ -->
+  <div id="screenQuiz" class="screen">
+    <div class="quiz-topbar">
+      <button class="quit-btn" id="quitBtn">⬅ SAIR</button>
+      <div class="quiz-info">
+        <span class="q-counter" id="qCounter">1/10</span>
+        <span class="q-pts-live" id="qPtsLive">🏅 0</span>
+        <span class="combo-badge" id="comboBadge">x1</span>
+      </div>
+    </div>
+    <div class="timer-wrap"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="q-card">
+      <div class="q-category" id="qCategory">CATEGORIA</div>
+      <div class="q-text" id="qText">Texto da questão</div>
+    </div>
+    <div class="options" id="optionsWrap"></div>
+    <div class="vf-wrap" id="vfWrap" style="display:none">
+      <button class="vf-btn v" id="vfTrue">✅ VERDADEIRO</button>
+      <button class="vf-btn f" id="vfFalse">❌ FALSO</button>
+    </div>
+    <div class="feedback" id="feedbackBox">
+      <div class="feedback-header" id="feedbackHeader"></div>
+      <div class="feedback-text"   id="feedbackText"></div>
+      <div class="feedback-source" id="feedbackSource"></div>
+      <div class="pts-earned"      id="ptsEarned"></div>
+    </div>
+    <button class="next-btn" id="nextBtn">PRÓXIMA QUESTÃO ⟶</button>
+  </div>
+
+  <!-- TELA: RESULTADOS -->
+  <div id="screenResults" class="screen">
+    <div class="results-wrap">
+      <div class="results-title"    id="resTitle">MISSÃO CONCLUÍDA!</div>
+      <div class="results-rank"     id="resRank">🏆</div>
+      <div class="results-rank-name" id="resRankName"></div>
+      <div class="results-stats">
+        <div class="stat-box"><span class="stat-val" id="resScore"  style="color:var(--green)">0%</span><div class="stat-label">Acertos</div></div>
+        <div class="stat-box"><span class="stat-val" id="resPts"    style="color:var(--gold)">0</span><div class="stat-label">Pontos</div></div>
+        <div class="stat-box"><span class="stat-val" id="resCombo"  style="color:var(--orange)">x1</span><div class="stat-label">Combo Máx</div></div>
+      </div>
+      <div class="results-pts-earned" id="resPtsEarned">+0 pontos adicionados ao total!</div>
+      <div class="unlock-notif" id="unlockNotif" style="display:none">
+        <div class="unlock-notif-title">🔓 NOVO MÓDULO DESBLOQUEADO!</div>
+        <div class="unlock-notif-body" id="unlockBody"></div>
+      </div>
+      <div class="results-btns">
+        <button class="res-btn primary"   id="replayBtn">🔄 JOGAR NOVAMENTE</button>
+        <button class="res-btn secondary" id="mapBtn">🗺 MAPA</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- CONFIRM OVERLAY -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-title">⚠️ ABANDONAR MISSÃO?</div>
+    <div class="confirm-text">Seu progresso nesta rodada será perdido. Tem certeza?</div>
+    <div class="confirm-btns">
+      <button class="confirm-btn danger" id="confirmYes">SIM, SAIR</button>
+      <button class="confirm-btn safe"   id="confirmNo">CONTINUAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   BANCO DE QUESTÕES — ORDEM UNIDA PMMG / CEFS 2026
+   ═══════════════════════════════════════════════════ */
+const MODULES = [
+  {
+    id: 0,
+    icon: '🪖',
+    name: 'RECRUTA — Bases da Ordem Unida',
+    desc: 'Histórico, conceitos, terminologia e vozes de comando',
+    unlockPts: 0,
+    questions: [
+      {
+        type: 'mc',
+        cat: 'CONCEITOS BÁSICOS',
+        text: 'O que é Ordem Unida?',
+        opts: [
+          'Conjunto de exercícios físicos militares',
+          'Conjunto harmonioso, cadenciado e equilibrado dos movimentos de marcha',
+          'Técnica de combate corpo a corpo',
+          'Conjunto de normas disciplinares da PMMG'
+        ],
+        ans: 1,
+        exp: 'Ordem Unida é o conjunto harmonioso, cadenciado e equilibrado dos movimentos de marcha, praticado em formação.',
+        src: 'Manual de Ordem Unida PMMG — Cap. 1'
+      },
+      {
+        type: 'mc',
+        cat: 'CONCEITOS BÁSICOS',
+        text: 'Qual é a finalidade principal da Ordem Unida?',
+        opts: [
+          'Apenas preparação física',
+          'Desenvolver disciplina, reflexo, união e trabalho em equipe',
+          'Treinamento de tiro',
+          'Somente para desfiles cívicos'
+        ],
+        ans: 1,
+        exp: 'A Ordem Unida desenvolve reflexos, disciplina, união, trabalho em equipe, organização, respeito e autoestima.',
+        src: 'Manual de Ordem Unida PMMG — Cap. 1'
+      },
+      {
+        type: 'vf',
+        cat: 'TERMINOLOGIA',
+        text: 'VERDADEIRO ou FALSO: "Fileira" é a disposição de elementos um ao lado do outro, todos voltados para a mesma frente.',
+        ans: true,
+        exp: 'Correto. Fileira = elementos lado a lado, voltados para a mesma frente. Diferente de "Linha", onde podem estar voltados para direções diferentes.',
+        src: 'Glossário de Ordem Unida PMMG'
+      },
+      {
+        type: 'mc',
+        cat: 'TERMINOLOGIA',
+        text: 'O que é "Intervalo" na Ordem Unida?',
+        opts: [
+          'Tempo de descanso entre exercícios',
+          'Espaço entre dois militares da mesma fileira (lado a lado)',
+          'Distância entre fileiras',
+          'Pausa entre vozes de comando'
+        ],
+        ans: 1,
+        exp: 'Intervalo é o espaço lateral entre dois militares da mesma fileira. Já "Distância" é o espaço entre elementos um atrás do outro.',
+        src: 'Glossário de Ordem Unida PMMG'
+      },
+      {
+        type: 'mc',
+        cat: 'VOZES DE COMANDO',
+        text: 'As vozes de comando são compostas por:',
+        opts: [
+          'Preparatória e executiva',
+          'Inicial, intermediária e final',
+          'Alerta e ação',
+          'Ordem e confirmação'
+        ],
+        ans: 0,
+        exp: 'Toda voz de comando tem duas partes: a PREPARATÓRIA (alerta os militares sobre o que farão) e a EXECUTIVA (momento da execução).',
+        src: 'Manual de Ordem Unida PMMG — Vozes de Comando'
+      },
+      {
+        type: 'vf',
+        cat: 'VOZES DE COMANDO',
+        text: 'VERDADEIRO ou FALSO: A voz executiva deve ser dada em tom suave e pausado para maior clareza.',
+        ans: false,
+        exp: 'FALSO. Os comandos são dados em tom FIRME, ENÉRGICO e que inspire respeito à figura de autoridade. A voz executiva é breve e enérgica.',
+        src: 'Manual de Ordem Unida PMMG — Vozes de Comando'
+      },
+      {
+        type: 'mc',
+        cat: 'TERMINOLOGIA',
+        text: '"Coluna" na Ordem Unida significa:',
+        opts: [
+          'Disposição de elementos um ao lado do outro',
+          'Disposição de elementos um atrás do outro, independente da distância',
+          'Grupo de quatro militares',
+          'Formação em círculo'
+        ],
+        ans: 1,
+        exp: 'Coluna = elementos dispostos um atrás do outro. "Fila" é mais específica: sobre uma linha reta, exatamente um ao lado do outro.',
+        src: 'Glossário de Ordem Unida PMMG'
+      },
+      {
+        type: 'vf',
+        cat: 'CONCEITOS BÁSICOS',
+        text: 'VERDADEIRO ou FALSO: A Ordem Unida é praticada exclusivamente pelas Forças Militares do Brasil.',
+        ans: false,
+        exp: 'FALSO. Além das forças militares, é praticada por organizações jovens como Clubes de Desbravadores, bandas e outros grupos.',
+        src: 'Manual de Ordem Unida PMMG — Cap. 1'
+      },
+      {
+        type: 'mc',
+        cat: 'FORMAÇÕES',
+        text: 'O que é "Formação" na Ordem Unida?',
+        opts: [
+          'A disposição do armamento',
+          'Grupo de indivíduos dispostos em colunas e fileiras conforme o número indicado',
+          'O uniforme completo de parada',
+          'A posição de sentido'
+        ],
+        ans: 1,
+        exp: 'Formação = grupo de indivíduos que se colocam dispostos em colunas e fileiras de acordo com o número indicado pelo comandante.',
+        src: 'Glossário de Ordem Unida PMMG'
+      },
+      {
+        type: 'mc',
+        cat: 'VOZES DE COMANDO',
+        text: 'Quem pode dar os comandos de Ordem Unida?',
+        opts: [
+          'Apenas oficiais superiores',
+          'Somente o comandante geral',
+          'O oficial, graduado ou o mais antigo presente à frente do grupo',
+          'Qualquer militar da formação'
+        ],
+        ans: 2,
+        exp: 'Os comandos são dados pelo oficial, graduado ou o mais antigo presente à frente do grupo. Podem ser dados por voz, corneta, clarim, apito ou gestos.',
+        src: 'Manual de Ordem Unida PMMG — Vozes de Comando'
+      }
+    ]
+  },
+  {
+    id: 1,
+    icon: '🫡',
+    name: 'SOLDADO — Posições e Movimentos',
+    desc: 'Sentido, Descansar, À Vontade, Cobrir, Perfilar, Apresentar-Arma',
+    unlockPts: 500,
+    questions: [
+      {
+        type: 'mc',
+        cat: 'POSIÇÕES',
+        text: 'Na posição de "SENTIDO", os calcanhares devem estar:',
+        opts: [
+          'Afastados na largura dos ombros',
+          'Unidos, com as pontas dos pés abertas a 45°',
+          'Paralelos, apontando para frente',
+          'Cruzados'
+        ],
+        ans: 1,
+        exp: 'Na posição de SENTIDO: calcanhares unidos, pontas dos pés abertas formando ângulo de 45°, corpo ereto, olhar ao frente.',
+        src: 'Manual de Ordem Unida PMMG — Posições'
+      },
+      {
+        type: 'vf',
+        cat: 'POSIÇÕES',
+        text: 'VERDADEIRO ou FALSO: Na posição "À VONTADE" o militar pode falar e movimentar-se livremente.',
+        ans: false,
+        exp: 'FALSO. "À Vontade" permite movimento do corpo (descanso relativo), mas não autoriza conversa. "DESCANSAR" é diferente de "À VONTADE".',
+        src: 'Manual de Ordem Unida PMMG — Posições'
+      },
+      {
+        type: 'mc',
+        cat: 'MOVIMENTOS',
+        text: 'O movimento "MEIA VOLTA VOLVER" consiste em:',
+        opts: [
+          'Girar 90° para a direita',
+          'Girar 180° pela esquerda, partindo da posição de sentido',
+          'Dar dois passos à retaguarda',
+          'Girar 90° para a esquerda'
+        ],
+        ans: 1,
+        exp: 'Meia volta volver: na posição de sentido, levantar a ponta do pé esquerdo e o calcanhar direito, girar pela esquerda fazendo 180°.',
+        src: 'Manual de Ordem Unida PMMG — Movimentos'
+      },
+      {
+        type: 'mc',
+        cat: 'MOVIMENTOS',
+        text: '"COBRIR" significa:',
+        opts: [
+          'Proteger o companheiro com o escudo',
+          'Colocar o quepe na cabeça',
+          'Alinhar-se exatamente atrás do elemento da frente na coluna',
+          'Fechar o espaço entre fileiras'
+        ],
+        ans: 2,
+        exp: 'Cobrir = cobertura: disposição de vários indivíduos em colunas, exatamente um atrás do outro.',
+        src: 'Glossário de Ordem Unida PMMG'
+      },
+      {
+        type: 'vf',
+        cat: 'MOVIMENTOS',
+        text: 'VERDADEIRO ou FALSO: "OLHAR À DIREITA" exige que o militar gire todo o corpo para o lado direito.',
+        ans: false,
+        exp: 'FALSO. "Olhar à direita" = girar APENAS A CABEÇA para o lado direito, mantendo o corpo na posição de sentido.',
+        src: 'Manual de Ordem Unida PMMG — Movimentos'
+      },
+      {
+        type: 'mc',
+        cat: 'POSIÇÕES',
+        text: 'Como é executada a "CONTINÊNCIA" (apresentar arma individual)?',
+        opts: [
+          'Bater o pé direito no chão',
+          'Levar a mão direita aberta à fronte pelo lado direito, dedos indicador e médio juntos',
+          'Cruzar os braços sobre o peito',
+          'Inclinar o tronco 45° para frente'
+        ],
+        ans: 1,
+        exp: 'Continência: braço direito dobrado no cotovelo, ponta dos dedos indicador e médio encostados na fronte, pelo lado direito.',
+        src: 'Manual de Ordem Unida PMMG — Continência'
+      },
+      {
+        type: 'mc',
+        cat: 'MOVIMENTOS',
+        text: 'A voz "FORA DE FORMA" determina que o militar:',
+        opts: [
+          'Desfaça a formação e descanse no local',
+          'Rompa a marcha com o pé esquerdo e saia rapidamente da formação',
+          'Recue três passos',
+          'Permaneça em sentido aguardando nova ordem'
+        ],
+        ans: 1,
+        exp: 'FORA DE FORMA: romper a marcha com o pé esquerdo, sair da formação rapidamente gritando o nome do clube/unidade.',
+        src: 'Manual de Ordem Unida PMMG — Vozes de Comando'
+      },
+      {
+        type: 'vf',
+        cat: 'POSIÇÕES',
+        text: 'VERDADEIRO ou FALSO: "FRENTE PARA A RETAGUARDA" é executado girando o corpo pela direita.',
+        ans: false,
+        exp: 'FALSO. "Frente para a retaguarda": na posição de descansar, saltar mantendo abertura de pernas, girar PELA ESQUERDA e ao tocar o chão soltar "RÁ".',
+        src: 'Manual de Ordem Unida PMMG — Movimentos'
+      },
+      {
+        type: 'mc',
+        cat: 'ALINHAMENTOS',
+        text: 'O que é "PERFILAR"?',
+        opts: [
+          'Verificar o perfil do uniforme',
+          'Alinhar-se lateralmente com o elemento de referência da fileira',
+          'Verificar se a arma está carregada',
+          'Posição de apresentação de identidade'
+        ],
+        ans: 1,
+        exp: 'Perfilar = alinhar-se lateralmente na fileira, usando o elemento de referência para ajustar o espaçamento (intervalo).',
+        src: 'Manual de Ordem Unida PMMG — Alinhamentos'
+      },
+      {
+        type: 'vf',
+        cat: 'CONCEITOS',
+        text: 'VERDADEIRO ou FALSO: A "Distância" entre militares é medida com o braço estendido para frente.',
+        ans: true,
+        exp: 'Correto. A distância padrão entre elementos de uma coluna é medida com o braço estendido à frente, tocando o ombro do elemento da frente.',
+        src: 'Manual de Ordem Unida PMMG — Terminologia'
+      }
+    ]
+  },
+  {
+    id: 2,
+    icon: '🥾',
+    name: 'CABO — Marchas e Cadências',
+    desc: 'Passo ordinário, acelerado, sem cadência, ALTO, voltas e mudanças de direção',
+    unlockPts: 1200,
+    questions: [
+      {
+        type: 'mc',
+        cat: 'MARCHAS',
+        text: 'O passo ordinário tem cadência de:',
+        opts: ['80 passos/minuto', '100 passos/minuto', '114 passos/minuto', '120 passos/minuto'],
+        ans: 2,
+        exp: 'O passo ordinário é executado a 114 passos por minuto, com passada de 75 cm.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'vf',
+        cat: 'MARCHAS',
+        text: 'VERDADEIRO ou FALSO: A marcha sempre se inicia com o pé esquerdo.',
+        ans: true,
+        exp: 'Correto. Por convenção da Ordem Unida, a marcha é sempre iniciada com o pé ESQUERDO ao sinal da voz executiva.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'mc',
+        cat: 'CADÊNCIAS',
+        text: 'O passo acelerado tem cadência de:',
+        opts: ['114 passos/minuto', '120 passos/minuto', '140 passos/minuto', '160 passos/minuto'],
+        ans: 2,
+        exp: 'O passo acelerado é executado a 140 passos por minuto, com passada maior que o ordinário.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'mc',
+        cat: 'COMANDOS',
+        text: 'Qual a voz de comando para parar a marcha?',
+        opts: ['PARAR!', 'ALTO!', 'STOP!', 'FIRME!'],
+        ans: 1,
+        exp: 'A voz de comando para interromper a marcha é "ALTO", dada quando o pé esquerdo toca o solo, para que o militar dê mais um passo e pare.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'vf',
+        cat: 'MARCHAS',
+        text: 'VERDADEIRO ou FALSO: No "passo sem cadência" os militares marcham em ritmo livre, sem seguir contagem.',
+        ans: false,
+        exp: 'FALSO. O passo sem cadência é caminhada informal (a tropa não mantém passada sincronizada), mas ainda segue ordens do comandante.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'mc',
+        cat: 'DIREÇÕES',
+        text: 'A voz "DIREITA VOLVER" durante a marcha é executada quando:',
+        opts: [
+          'O pé direito toca o solo',
+          'O pé esquerdo toca o solo',
+          'Ambos os pés estão no solo',
+          'O militar está com o pé direito no ar'
+        ],
+        ans: 1,
+        exp: 'As vozes de mudança de direção ("Direita Volver", "Esquerda Volver") são dadas quando o pé correspondente à direção de giro toca o solo.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'mc',
+        cat: 'MARCHAS',
+        text: 'O que é "MARCAR PASSO"?',
+        opts: [
+          'Contar os passos em voz alta',
+          'Marchar no mesmo lugar, sem deslocamento, mantendo a cadência',
+          'Acelerar o ritmo da marcha',
+          'Diminuir a passada pela metade'
+        ],
+        ans: 1,
+        exp: 'Marcar passo = executar o movimento de marcha no mesmo lugar, sem avançar, mantendo a cadência e o ritmo.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'vf',
+        cat: 'CADÊNCIAS',
+        text: 'VERDADEIRO ou FALSO: O tamanho do passo ordinário é de 75 centímetros.',
+        ans: true,
+        exp: 'Correto. O passo ordinário tem passada de 75 cm a 114 passos/minuto.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'mc',
+        cat: 'DIREÇÕES',
+        text: '"MEIA VOLTA VOLVER" durante a marcha significa:',
+        opts: [
+          'Parar e aguardar',
+          'Girar 90° para a direita continuando a marcha',
+          'Inverter o sentido da marcha, girando 180°',
+          'Voltar para a posição inicial'
+        ],
+        ans: 2,
+        exp: 'Meia volta volver na marcha = inversão de 180° no sentido do deslocamento, continuando a marchar na direção oposta.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      },
+      {
+        type: 'vf',
+        cat: 'MARCHAS',
+        text: 'VERDADEIRO ou FALSO: Durante a marcha, os braços devem permanecer rígidos e colados ao corpo.',
+        ans: false,
+        exp: 'FALSO. Os braços balançam naturalmente durante a marcha, alternados com os pés, contribuindo para o equilíbrio e cadência.',
+        src: 'Manual de Ordem Unida PMMG — Marchas'
+      }
+    ]
+  },
+  {
+    id: 3,
+    icon: '🔫',
+    name: 'SARGENTO — Fuzil Mosquefal',
+    desc: 'Posições, manejo, tempos de cada movimento e deslocamentos com fuzil',
+    unlockPts: 2500,
+    questions: [
+      {
+        type: 'mc',
+        cat: 'FUZIL',
+        text: 'A posição "ARMA NO OMBRO" com o fuzil Mosquefal é adotada:',
+        opts: [
+          'Apenas em cerimônias fúnebres',
+          'Durante deslocamentos e marchas em desfile',
+          'Somente na posição de sentido',
+          'Apenas ao apresentar a guarda'
+        ],
+        ans: 1,
+        exp: 'Arma no Ombro é a posição padrão para marchas e deslocamentos com o fuzil, garantindo conforto e uniformidade na formação.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'vf',
+        cat: 'FUZIL',
+        text: 'VERDADEIRO ou FALSO: "APRESENTAR ARMA" com o fuzil é executado em 3 tempos.',
+        ans: true,
+        exp: 'Correto. O movimento Apresentar Arma com o fuzil Mosquefal é executado em 3 tempos distintos e precisos.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'mc',
+        cat: 'FUZIL',
+        text: 'Na posição "DESCANSEM ARMAS", o fuzil fica:',
+        opts: [
+          'Apoiado no solo pela coronha, ao lado direito do militar',
+          'Seguro horizontalmente na frente do corpo',
+          'Cruzado sobre o peito',
+          'Suspenso pelo cinto'
+        ],
+        ans: 0,
+        exp: 'Descansem Armas: coronha apoiada no solo ao lado do pé direito, cano apontando para cima, mão direita segurando o fuzil na altura do quadril.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'mc',
+        cat: 'FUZIL',
+        text: '"PASSAGE DE ARMAS" (passagem de armas) é realizada:',
+        opts: [
+          'Apenas quando há troca de guarda',
+          'Para contar e conferir o armamento da tropa',
+          'Somente em competições de Ordem Unida',
+          'Quando o comandante determina o exercício'
+        ],
+        ans: 1,
+        exp: 'Passagem de armas é o procedimento de conferência do armamento, realizado para contagem e verificação da situação das armas na formação.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'vf',
+        cat: 'FUZIL',
+        text: 'VERDADEIRO ou FALSO: Durante a marcha com fuzil, o armamento permanece fixo, sem movimento.',
+        ans: false,
+        exp: 'FALSO. Durante a marcha com o fuzil no ombro, ocorre movimento natural sincronizado com o passo, mantendo a uniformidade da formação.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'mc',
+        cat: 'FUZIL',
+        text: 'A posição "ARMA CRUZADA NO PEITO" é usada:',
+        opts: [
+          'Durante a marcha ordinária',
+          'Em posição de guarda de honra e cerimônias especiais',
+          'No passo acelerado',
+          'Apenas no treinamento'
+        ],
+        ans: 1,
+        exp: 'Arma cruzada no peito é uma posição cerimonial usada em guardas de honra e cerimônias militares especiais.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'vf',
+        cat: 'FUZIL',
+        text: 'VERDADEIRO ou FALSO: "SENTIDO — ARMAS" é a posição de partida para os exercícios com fuzil.',
+        ans: true,
+        exp: 'Correto. A posição Sentido com Armas é o ponto de partida para a maioria dos movimentos e vozes de comando com o fuzil.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'mc',
+        cat: 'FUZIL',
+        text: 'Em quantos tempos é executado o movimento "OMBRO — ARMAS" (partir de Descansem Armas)?',
+        opts: ['1 tempo', '2 tempos', '3 tempos', '4 tempos'],
+        ans: 2,
+        exp: 'O movimento Ombro Armas partindo de Descansem Armas é executado em 3 tempos bem marcados.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'mc',
+        cat: 'FUZIL',
+        text: 'O que determina a voz "DEPOSITAR — ARMAS"?',
+        opts: [
+          'Jogar a arma no chão rapidamente',
+          'Colocar o fuzil no armeiro ou local designado de forma coordenada',
+          'Passar a arma para o companheiro ao lado',
+          'Retirar o carregador da arma'
+        ],
+        ans: 1,
+        exp: 'Depositar Armas: colocar o fuzil de forma coordenada no armeiro ou local designado pelo comandante, com movimento sincronizado da formação.',
+        src: 'Manual de Ordem Unida PMMG — Fuzil Mosquefal'
+      },
+      {
+        type: 'vf',
+        cat: 'FUZIL',
+        text: 'VERDADEIRO ou FALSO: O fuzil Mosquefal usado na Ordem Unida da PMMG é o mesmo utilizado em combate.',
+        ans: false,
+        exp: 'FALSO. O fuzil utilizado na Ordem Unida é o Mosquefal (fuzil de madeira/treinamento), especificamente fabricado para cerimônias, sem mecanismo de disparo funcional.',
+        src: 'Manual de Ordem Unida PMMG — Equipamentos'
+      }
+    ]
+  },
+  {
+    id: 4,
+    icon: '💀',
+    name: 'ELITE — SMT e Questões Mistas',
+    desc: 'Submetralhadora MT 12A + perguntas avançadas de todos os temas',
+    unlockPts: 5000,
+    questions: [
+      {
+        type: 'mc',
+        cat: 'SMT / ELITE',
+        text: 'A SMT (Submetralhadora) MT 12A é utilizada na Ordem Unida principalmente por:',
+        opts: [
+          'Toda a tropa em formações padrão',
+          'Oficiais e sargentos em cerimônias especiais de honra',
+          'Apenas pelo comandante da formação',
+          'Militares em funções de segurança do perímetro'
+        ],
+        ans: 1,
+        exp: 'A SMT MT 12A é empregada em cerimônias especiais de honra, portada por oficiais e sargentos, seguindo protocolo específico da PMMG.',
+        src: 'Manual de Ordem Unida PMMG — SMT MT 12A'
+      },
+      {
+        type: 'vf',
+        cat: 'SMT / ELITE',
+        text: 'VERDADEIRO ou FALSO: Os movimentos com a SMT MT 12A seguem a mesma sequência de tempos do fuzil Mosquefal.',
+        ans: false,
+        exp: 'FALSO. A SMT tem movimentos e sequências de tempos próprios, adaptados ao formato e dimensões da arma, diferentes do fuzil.',
+        src: 'Manual de Ordem Unida PMMG — SMT MT 12A'
+      },
+      {
+        type: 'mc',
+        cat: 'MISTO — REVISÃO',
+        text: 'Qual é a diferença entre "Fila" e "Coluna"?',
+        opts: [
+          'São sinônimos na Ordem Unida',
+          'Fila: linha reta exatamente lado a lado. Coluna: um atrás do outro (qualquer distância/formação)',
+          'Fila tem mais de 10 pessoas, coluna menos de 10',
+          'Fila é para marchas, coluna é para posições estáticas'
+        ],
+        ans: 1,
+        exp: 'Fila = disposição em linha reta, exatamente lado a lado. Coluna = disposição um atrás do outro, independente da distância e formação.',
+        src: 'Glossário de Ordem Unida PMMG'
+      },
+      {
+        type: 'mc',
+        cat: 'MISTO — REVISÃO',
+        text: 'Durante um desfile, a tropa marcha em passo:',
+        opts: [
+          'Sem cadência, de forma livre',
+          'Acelerado (140 passos/min)',
+          'Ordinário (114 passos/min)',
+          'Reduzido (80 passos/min)'
+        ],
+        ans: 2,
+        exp: 'Os desfiles militares e cívicos são realizados no passo ordinário (114 passos/minuto, passada de 75 cm), que transmite solenidade e uniformidade.',
+        src: 'Manual de Ordem Unida PMMG — Desfiles'
+      },
+      {
+        type: 'vf',
+        cat: 'MISTO — REVISÃO',
+        text: 'VERDADEIRO ou FALSO: O comandante da formação também deve executar todos os movimentos junto com a tropa.',
+        ans: false,
+        exp: 'FALSO. O comandante da formação fica à frente, de costas para a autoridade e de frente para a tropa, dando as vozes de comando sem necessariamente executar os movimentos.',
+        src: 'Manual de Ordem Unida PMMG — Comandante de Formação'
+      },
+      {
+        type: 'mc',
+        cat: 'SMT / ELITE',
+        text: 'A posição "ARMA NO BRAÇO" com a SMT é executada:',
+        opts: [
+          'Com a arma presa no cinto',
+          'Segurando a arma no braço esquerdo dobrado, junto ao corpo',
+          'Com a arma dependurada no ombro direito',
+          'Com a arma cruzada nas costas'
+        ],
+        ans: 1,
+        exp: 'Arma no Braço com a SMT: arma presa no braço esquerdo dobrado e junto ao corpo, em posição confortável e segura para deslocamentos.',
+        src: 'Manual de Ordem Unida PMMG — SMT MT 12A'
+      },
+      {
+        type: 'mc',
+        cat: 'MISTO — ELITE',
+        text: 'Em uma formatura com bandeira nacional, onde deve ficar o porta-bandeira?',
+        opts: [
+          'No centro da formação',
+          'À esquerda do comandante',
+          'À direita do comandante, no lugar de maior honra',
+          'Atrás de toda a formação'
+        ],
+        ans: 2,
+        exp: 'O porta-bandeira fica à DIREITA do comandante, pois o lado direito é o posto de honra nas formações militares brasileiras.',
+        src: 'Manual de Ordem Unida PMMG — Bandeiras e Cerimônias'
+      },
+      {
+        type: 'vf',
+        cat: 'MISTO — ELITE',
+        text: 'VERDADEIRO ou FALSO: Em lugares fechados, a Bandeira Nacional deve ficar a esquerda do palestrante.',
+        ans: false,
+        exp: 'FALSO. Em lugares fechados como salões, o pedestal deve ficar à DIREITA do palestrante/autoridade. A Bandeira Nacional sempre ocupa o lugar de honra (direita).',
+        src: 'Protocolo de Bandeiras — PMMG'
+      },
+      {
+        type: 'mc',
+        cat: 'MISTO — ELITE',
+        text: 'A sequência de apresentação das bandeiras em formatura é:',
+        opts: [
+          'Estadual, Municipal, Nacional',
+          'Nacional, Estadual, Municipal (e demais por hierarquia)',
+          'Alfabética por nome do estado',
+          'Por tamanho, da maior para a menor'
+        ],
+        ans: 1,
+        exp: 'A ordem é sempre: NACIONAL em primeiro lugar (maior honra), depois ESTADUAL, MUNICIPAL e demais, seguindo hierarquia institucional.',
+        src: 'Protocolo de Bandeiras — PMMG'
+      },
+      {
+        type: 'vf',
+        cat: 'MISTO — ELITE',
+        text: 'VERDADEIRO ou FALSO: Para os estados da federação brasileira, a ordem das bandeiras segue a data de constituição histórica do estado.',
+        ans: true,
+        exp: 'Correto. Para estados e territórios da União, a ordem é determinada pela constituição histórica: Bahia, Rio de Janeiro, Maranhão, Pará, Pernambuco, etc.',
+        src: 'Protocolo de Bandeiras — PMMG'
+      }
+    ]
+  }
+];
+
+/* ═══════════════════════════════════════════════════
+   ESTADO GLOBAL
+   ═══════════════════════════════════════════════════ */
+const STATE = {
+  globalPts: 0,
+  moduleProgress: {},   // { moduleId: { stars, bestPct, bestPts } }
+  currentModule: null,
+  currentQ: 0,
+  sessionPts: 0,
+  combo: 1,
+  maxCombo: 1,
+  correct: 0,
+  timerInterval: null,
+  timeLeft: 0,
+  muted: false,
+  answered: false
+};
+
+const TIMER_SECONDS = 25;
+const PTS_BASE      = 100;
+const PTS_TIME_BONUS = 50;
+
+/* ═══════════════════════════════════════════════════
+   PERSISTÊNCIA — localStorage
+   ═══════════════════════════════════════════════════ */
+function save() {
+  try {
+    localStorage.setItem('quiztatico_v2', JSON.stringify({
+      globalPts: STATE.globalPts,
+      moduleProgress: STATE.moduleProgress,
+      muted: STATE.muted
+    }));
+  } catch(e) {}
+}
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('quiztatico_v2') || '{}');
+    STATE.globalPts       = d.globalPts       || 0;
+    STATE.moduleProgress  = d.moduleProgress  || {};
+    STATE.muted           = d.muted           || false;
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════════
+   SOM (Web Audio API — sem arquivos externos)
+   ═══════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq, dur, type='sine', vol=0.15) {
+  if (STATE.muted) return;
+  try {
+    const ctx = getAudio();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    o.start(); o.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function sfxCorrect() { playTone(660, .12); setTimeout(()=>playTone(880,.15),120); }
+function sfxWrong()   { playTone(200, .3, 'sawtooth', .1); }
+function sfxNext()    { playTone(440, .08, 'sine', .08); }
+function sfxUnlock()  {
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.2),i*100));
+}
+
+/* ═══════════════════════════════════════════════════
+   UTILITÁRIOS
+   ═══════════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showToast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function confetti() {
+  const colors = ['#00d4ff','#ffd700','#00ff88','#ff4466','#9966ff','#ff8800'];
+  for (let i = 0; i < 40; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left:${Math.random()*100}vw;
+      top:-10px;
+      background:${colors[i % colors.length]};
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      width:${6+Math.random()*8}px;
+      height:${6+Math.random()*8}px;
+      animation-delay:${Math.random()*1}s;
+      animation-duration:${1.5+Math.random()*1.5}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* ═══════════════════════════════════════════════════
+   MAPA DE MÓDULOS
+   ═══════════════════════════════════════════════════ */
+function renderMap() {
+  document.getElementById('globalPtsVal').textContent = STATE.globalPts.toLocaleString('pt-BR');
+  const grid = document.getElementById('modulesGrid');
+  grid.innerHTML = '';
+
+  MODULES.forEach((mod, idx) => {
+    const locked   = STATE.globalPts < mod.unlockPts;
+    const prog     = STATE.moduleProgress[mod.id] || {};
+    const stars    = prog.stars || 0;
+    const bestPct  = prog.bestPct || 0;
+    const starStr  = '★'.repeat(stars) + '☆'.repeat(3-stars);
+
+    const card = document.createElement('div');
+    card.className = 'module-card' + (locked ? ' locked' : '');
+    card.innerHTML = `
+      <div class="module-top">
+        <div class="module-icon">${mod.icon}</div>
+        <div class="module-info">
+          <div class="module-name">${mod.name}</div>
+          <div class="module-desc">${mod.desc}</div>
+        </div>
+      </div>
+      <div class="module-bottom">
+        <div class="module-stars" style="color:var(--gold)">${starStr}</div>
+        ${locked
+          ? `<div class="module-lock"><span class="lock-icon">🔒</span>${mod.unlockPts.toLocaleString('pt-BR')} pts</div>`
+          : bestPct > 0
+            ? `<div class="module-best">Melhor: ${bestPct}%</div>`
+            : `<div class="module-badge">DISPONÍVEL</div>`
+        }
+      </div>
+      ${bestPct > 0 ? `<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${bestPct}%"></div></div>` : ''}
+    `;
+
+    if (!locked) {
+      card.addEventListener('click', () => startModule(idx));
+    }
+    grid.appendChild(card);
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   QUIZ
+   ═══════════════════════════════════════════════════ */
+function startModule(idx) {
+  const mod = MODULES[idx];
+  STATE.currentModule  = idx;
+  STATE.currentQ       = 0;
+  STATE.sessionPts     = 0;
+  STATE.combo          = 1;
+  STATE.maxCombo       = 1;
+  STATE.correct        = 0;
+  STATE.answered       = false;
+
+  // Embaralhar questões
+  mod._shuffled = shuffle(mod.questions);
+
+  showScreen('screenQuiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const mod = MODULES[STATE.currentModule];
+  const q   = mod._shuffled[STATE.currentQ];
+  STATE.answered = false;
+
+  // Topbar
+  document.getElementById('qCounter').textContent  = `${STATE.currentQ+1}/${mod._shuffled.length}`;
+  document.getElementById('qPtsLive').textContent  = `🏅 ${STATE.sessionPts.toLocaleString('pt-BR')}`;
+
+  const cb = document.getElementById('comboBadge');
+  if (STATE.combo >= 2) {
+    cb.textContent = `🔥 x${STATE.combo}`;
+    cb.classList.add('show');
+  } else {
+    cb.classList.remove('show');
+  }
+
+  // Questão
+  document.getElementById('qCategory').textContent = q.cat;
+  document.getElementById('qText').textContent     = q.text;
+
+  // Feedback oculto
+  const fb = document.getElementById('feedbackBox');
+  fb.className = 'feedback';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  // Opções
+  const optWrap = document.getElementById('optionsWrap');
+  const vfWrap  = document.getElementById('vfWrap');
+
+  if (q.type === 'vf') {
+    optWrap.style.display = 'none';
+    vfWrap.style.display  = 'grid';
+    const btnT = document.getElementById('vfTrue');
+    const btnF = document.getElementById('vfFalse');
+    btnT.className = 'vf-btn v';
+    btnF.className = 'vf-btn f';
+    btnT.disabled = false;
+    btnF.disabled = false;
+    btnT.onclick = () => answerVF(true,  q);
+    btnF.onclick = () => answerVF(false, q);
+  } else {
+    vfWrap.style.display  = 'none';
+    optWrap.style.display = 'flex';
+    optWrap.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      btn.onclick = () => answerMC(i, q);
+      optWrap.appendChild(btn);
+    });
+  }
+
+  startTimer(q);
+}
+
+function startTimer(q) {
+  clearInterval(STATE.timerInterval);
+  STATE.timeLeft = TIMER_SECONDS;
+  const fill = document.getElementById('timerFill');
+  fill.style.width = '100%';
+  fill.style.background = 'linear-gradient(90deg, var(--primary), var(--purple))';
+  fill.classList.remove('warn');
+
+  STATE.timerInterval = setInterval(() => {
+    STATE.timeLeft--;
+    const pct = (STATE.timeLeft / TIMER_SECONDS) * 100;
+    fill.style.width = pct + '%';
+
+    if (STATE.timeLeft <= 8) {
+      fill.style.background = 'var(--red)';
+      fill.classList.add('warn');
+    } else if (STATE.timeLeft <= 15) {
+      fill.style.background = 'var(--orange)';
+    }
+
+    if (STATE.timeLeft <= 0) {
+      clearInterval(STATE.timerInterval);
+      if (!STATE.answered) timeOut(q);
+    }
+  }, 1000);
+}
+
+function timeOut(q) {
+  STATE.answered = true;
+  STATE.combo = 1;
+  disableAllOptions();
+  showFeedback(false, q, 0);
+  showToast('⏱ TEMPO ESGOTADO!');
+  sfxWrong();
+}
+
+function answerMC(idx, q) {
+  if (STATE.answered) return;
+  STATE.answered = true;
+  clearInterval(STATE.timerInterval);
+
+  const correct = idx === q.ans;
+  const btns    = document.querySelectorAll('.opt-btn');
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.ans) b.classList.add('correct');
+    else if (i === idx && !correct) b.classList.add('wrong');
+  });
+  processAnswer(correct, q);
+}
+
+function answerVF(answer, q) {
+  if (STATE.answered) return;
+  STATE.answered = true;
+  clearInterval(STATE.timerInterval);
+
+  const correct = answer === q.ans;
+  const btnT = document.getElementById('vfTrue');
+  const btnF = document.getElementById('vfFalse');
+  btnT.disabled = true;
+  btnF.disabled = true;
+
+  if (q.ans === true)  { btnT.classList.add('correct'); if (!correct) btnF.classList.add('wrong'); }
+  else                 { btnF.classList.add('correct'); if (!correct) btnT.classList.add('wrong'); }
+
+  processAnswer(correct, q);
+}
+
+function processAnswer(correct, q) {
+  let pts = 0;
+  if (correct) {
+    const timebonus = Math.floor((STATE.timeLeft / TIMER_SECONDS) * PTS_TIME_BONUS);
+    pts = (PTS_BASE + timebonus) * STATE.combo;
+    STATE.sessionPts += pts;
+    STATE.correct++;
+    STATE.combo = Math.min(STATE.combo + 1, 5);
+    STATE.maxCombo = Math.max(STATE.maxCombo, STATE.combo);
+    sfxCorrect();
+  } else {
+    STATE.combo = 1;
+    sfxWrong();
+  }
+  showFeedback(correct, q, pts);
+}
+
+function showFeedback(correct, q, pts) {
+  const fb  = document.getElementById('feedbackBox');
+  const hdr = document.getElementById('feedbackHeader');
+  const txt = document.getElementById('feedbackText');
+  const src = document.getElementById('feedbackSource');
+  const pe  = document.getElementById('ptsEarned');
+
+  fb.className = `feedback show ${correct ? 'correct-fb' : 'wrong-fb'}`;
+  hdr.textContent = correct ? '✅ CORRETO!' : '❌ ERROU!';
+  txt.textContent = q.exp;
+  src.textContent = q.src || '';
+  pe.textContent  = pts > 0 ? `+${pts.toLocaleString('pt-BR')} pts${STATE.combo > 2 ? ` 🔥 COMBO x${STATE.combo-1}!` : ''}` : '';
+
+  document.getElementById('qPtsLive').textContent = `🏅 ${STATE.sessionPts.toLocaleString('pt-BR')}`;
+  document.getElementById('nextBtn').className = 'next-btn show';
+}
+
+function disableAllOptions() {
+  document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+  document.getElementById('vfTrue').disabled  = true;
+  document.getElementById('vfFalse').disabled = true;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESULTADOS
+   ═══════════════════════════════════════════════════ */
+function showResults() {
+  clearInterval(STATE.timerInterval);
+  const mod  = MODULES[STATE.currentModule];
+  const total = mod._shuffled.length;
+  const pct   = Math.round((STATE.correct / total) * 100);
+
+  // Calcular estrelas
+  let stars = 0;
+  if (pct >= 90) stars = 3;
+  else if (pct >= 70) stars = 2;
+  else if (pct >= 50) stars = 1;
+
+  // Rank
+  const ranks = [
+    { min:0,  emoji:'😰', name:'RECRUTA ZERO' },
+    { min:30, emoji:'🪖', name:'SOLDADO RASO' },
+    { min:50, emoji:'🎖️', name:'CABO OPERATIVO' },
+    { min:70, emoji:'⭐', name:'SARGENTO TÁTICO' },
+    { min:85, emoji:'🏆', name:'TENENTE DE ELITE' },
+    { min:100,emoji:'💎', name:'CORONEL SUPREMO' }
+  ];
+  const rank = [...ranks].reverse().find(r => pct >= r.min) || ranks[0];
+
+  // Atualizar progresso do módulo
+  const prev = STATE.moduleProgress[mod.id] || {};
+  if (!prev.stars || stars > prev.stars) {
+    STATE.moduleProgress[mod.id] = {
+      ...prev, stars,
+      bestPct: Math.max(pct, prev.bestPct || 0),
+      bestPts: Math.max(STATE.sessionPts, prev.bestPts || 0)
+    };
+  }
+
+  // Adicionar pontos globais
+  STATE.globalPts += STATE.sessionPts;
+  save();
+
+  // UI
+  document.getElementById('resTitle').textContent    = pct === 100 ? '🎯 MISSÃO PERFEITA!' : pct >= 70 ? '✅ MISSÃO CONCLUÍDA!' : '⚠️ MISSÃO PARCIAL';
+  document.getElementById('resRank').textContent     = rank.emoji;
+  document.getElementById('resRankName').textContent = rank.name;
+  document.getElementById('resScore').textContent    = `${pct}%`;
+  document.getElementById('resPts').textContent      = STATE.sessionPts.toLocaleString('pt-BR');
+  document.getElementById('resCombo').textContent    = `x${STATE.maxCombo}`;
+  document.getElementById('resPtsEarned').textContent = `+${STATE.sessionPts.toLocaleString('pt-BR')} pontos adicionados ao total! (Total: ${STATE.globalPts.toLocaleString('pt-BR')} pts)`;
+
+  // Verificar desbloqueios
+  const nextMod = MODULES[STATE.currentModule + 1];
+  const unlockNotif = document.getElementById('unlockNotif');
+  if (nextMod && STATE.globalPts >= nextMod.unlockPts && (STATE.globalPts - STATE.sessionPts) < nextMod.unlockPts) {
+    unlockNotif.style.display = 'block';
+    document.getElementById('unlockBody').textContent = `${nextMod.icon} ${nextMod.name} agora está disponível!`;
+    sfxUnlock();
+  } else {
+    unlockNotif.style.display = 'none';
+  }
+
+  if (pct === 100) confetti();
+  showScreen('screenResults');
+}
+
+/* ═══════════════════════════════════════════════════
+   EVENTOS
+   ═══════════════════════════════════════════════════ */
+document.getElementById('nextBtn').addEventListener('click', () => {
+  const mod = MODULES[STATE.currentModule];
+  sfxNext();
+  if (STATE.currentQ + 1 >= mod._shuffled.length) {
+    showResults();
+  } else {
+    STATE.currentQ++;
+    renderQuestion();
+  }
+});
+
+document.getElementById('quitBtn').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.add('show');
+});
+document.getElementById('confirmYes').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  clearInterval(STATE.timerInterval);
+  showScreen('screenMap');
+  renderMap();
+});
+document.getElementById('confirmNo').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.remove('show');
+});
+
+document.getElementById('replayBtn').addEventListener('click', () => {
+  startModule(STATE.currentModule);
+});
+document.getElementById('mapBtn').addEventListener('click', () => {
+  showScreen('screenMap');
+  renderMap();
+});
+
+document.getElementById('muteBtn').addEventListener('click', () => {
+  STATE.muted = !STATE.muted;
+  document.getElementById('muteBtn').textContent = STATE.muted ? '🔇' : '🔊';
+  save();
+});
+
+/* ═══════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════ */
+load();
+document.getElementById('globalPtsVal').textContent = STATE.globalPts.toLocaleString('pt-BR');
+document.getElementById('muteBtn').textContent = STATE.muted ? '🔇' : '🔊';
+renderMap();
+</script>
+</body>
+</html>
